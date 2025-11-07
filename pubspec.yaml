@@ -41,6 +41,7 @@ dependencies:
   geocoding: ^3.0.0
   map_themes: ^0.0.2+2
   google_maps_flutter: ^2.14.0
+  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +69,7 @@ flutter:
     - assets/icons/
     - assets/places/
     - assets/JomJalanLogo.png
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

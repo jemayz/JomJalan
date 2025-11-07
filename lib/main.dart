@@ -3,6 +3,7 @@ import 'package:jomjalan/providers/gamification_provider.dart';
 import 'package:jomjalan/providers/itinerary_provider.dart';
 import 'package:jomjalan/screens/welcome_page.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // --- JomJalan Color Palette ---
 // Your specified green
@@ -31,10 +32,13 @@ const MaterialColor primaryGreenSwatch = MaterialColor(
   },
 );
 
-// --- This is the original, simple main() function ---
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 👇 Load your .env file before runApp()
+  await dotenv.load(fileName: ".env");
+
   runApp(
-    // MultiProvider registers all your app-wide states
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => ItineraryProvider()),
