@@ -5,7 +5,6 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
-    <!-- Your application tag, make sure 'package' matches your project if you changed it -->
     <application
         android:label="jomjalan"
         android:name="${applicationName}"
@@ -21,7 +20,6 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
             
-            <!-- This is the meta-data tag for the Flutter theme. -->
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
@@ -33,27 +31,21 @@
             </intent-filter>
         </activity>
 
-        <!-- 
-        This is your API Key from build.gradle.kts (DO NOT REMOVE)
-        It goes inside <application>, but *after* </activity>
-        -->
+        <!-- Your API Key (leave this here) -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${GOOGLE_MAPS_API_KEY}" />
-
-    
+        
         <meta-data
             android:name="com.google.android.geo.MAP_ID"
-            android:value="9cbd5dd5311550e5c06545f4" />
-    
+            android:value="b6327b5af44f4abbd3b44d818b" />
+        
 
-        <!-- Don't delete the meta-data below. -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
     
-    <!-- These are required by some plugins (like geocoding) -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
