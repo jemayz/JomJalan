@@ -188,19 +188,6 @@ class _MapPageState extends State<MapPage> {
                 ),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Ionicons.arrow_back_outline,
-                        color: primaryGreen,
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) => const HomePage(),
-                          ),
-                        );
-                      },
-                    ),
                     Expanded(
                       child: TextField(
                         controller: _searchController,
