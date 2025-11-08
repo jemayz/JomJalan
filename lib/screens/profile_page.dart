@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:jomjalan/main.dart'; // For colors
 import 'package:jomjalan/models/spot_model.dart'; // For Challenge
@@ -29,7 +30,17 @@ class _ProfilePageState extends State<ProfilePage> {
     final gamification = context.watch<GamificationProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Profile')),
+      appBar: AppBar(
+        title: const Text(
+          'My Profile',
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -47,16 +58,20 @@ class _ProfilePageState extends State<ProfilePage> {
                   backgroundColor: primaryGreen,
                   child: Icon(Ionicons.person, size: 40, color: Colors.white),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 6),
                 const Text(
-                  "JomJalan User",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  "User",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 2),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 8,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: primaryGreen,
@@ -64,7 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   child: Text(
                     "${gamification.points} Points",
-                    style: const TextStyle(
+                    style: GoogleFonts.fugazOne(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -91,6 +106,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         challenge,
                       );
                       return Card(
+                        color: secondaryBackgroundColor,
                         elevation: 2,
                         margin: const EdgeInsets.only(bottom: 10),
                         shape: RoundedRectangleBorder(
@@ -105,13 +121,20 @@ class _ProfilePageState extends State<ProfilePage> {
                             challenge.title,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
+                              color: textColor,
                               decoration:
                                   isCompleted
                                       ? TextDecoration.lineThrough
                                       : TextDecoration.none,
+                              decorationColor: accentColor,
+                              decorationThickness: 4,
+                              decorationStyle: TextDecorationStyle.solid,
                             ),
                           ),
-                          subtitle: Text(challenge.description),
+                          subtitle: Text(
+                            challenge.description,
+                            style: TextStyle(color: subTextColor),
+                          ),
                           trailing: Text(
                             "+${challenge.points} pts",
                             style: const TextStyle(

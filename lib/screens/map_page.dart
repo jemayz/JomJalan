@@ -6,6 +6,8 @@ import 'package:ionicons/ionicons.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:jomjalan/main.dart';
+import 'package:jomjalan/screens/home_page.dart';
+import 'package:jomjalan/services/mock_api_service.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -17,12 +19,17 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   GoogleMapController? _mapController;
   LatLng _currentLocation = const LatLng(
-    3.139,
-    101.6869,
+    3.2512,
+    101.7383,
   ); // Default: Kuala Lumpur
   Set<Marker> _markers = {};
   String? _selectedCategory;
   final TextEditingController _searchController = TextEditingController();
+
+  // --- ADDED ---
+  // Create an instance of your API service
+  final MockApiService _apiService = MockApiService();
+  // -----------
 
   static const String _darkMapStyle = '''[
     {"elementType":"geometry","stylers":[{"color":"#0f2027"}]},
@@ -62,12 +69,9 @@ class _MapPageState extends State<MapPage> {
           CameraUpdate.newCameraPosition(CameraPosition(target: pos, zoom: 14)),
         );
         setState(() {
-          // --- THIS IS THE FIX ---
-          // Update the _currentLocation so _findNearby knows where to search
           _currentLocation = pos;
-          _markers.clear(); // Clear old markers
-          _selectedCategory = null; // Deselect category
-          // -----------------------
+          _markers.clear();
+          _selectedCategory = null;
           _markers.add(
             Marker(
               markerId: MarkerId(query),
@@ -82,6 +86,7 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
+  // --- THIS FUNCTION IS NOW MODIFIED ---
   Future<void> _findNearby(String category) async {
     if (_selectedCategory == category) {
       setState(() {
@@ -96,44 +101,36 @@ class _MapPageState extends State<MapPage> {
       _selectedCategory = category;
     });
 
-    final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
-
-    // --- THIS IS THE FIX ---
-    // This now uses the UPDATED _currentLocation from your search
-    final location =
-        '${_currentLocation.latitude},${_currentLocation.longitude}';
-    const radius = 2000; // 2km radius
+    // The Google API key is no longer needed here.
+    // It's safely on your server.
 
     final Map<String, String> categoryTypes = {
       'cafe': 'cafe',
       'restaurants': 'restaurant',
       'hotels': 'lodging',
       'attractions': 'tourist_attraction',
-      'activities': 'point_of_interest', // A good general type
+      'activities': 'point_of_interest',
     };
 
     final type = categoryTypes[category] ?? 'point_of_interest';
 
-    final url =
-        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$location&radius=$radius&type=$type&key=$apiKey';
-
     try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final results = data['results'] as List;
+      // --- THIS IS THE FIX ---
+      // Call your API Service instead of calling Google directly
+      final results = await _apiService.getNearbyPlaces(_currentLocation, type);
+      // -----------------------
 
+      if (results.isNotEmpty) {
         Set<Marker> newMarkers =
             results.map((place) {
-              final lat = place['geometry']['location']['lat'];
-              final lng = place['geometry']['location']['lng'];
+              final lat = place['lat'];
+              final lng = place['lng'];
               final name = place['name'];
-              final vicinity = place['vicinity'];
 
               return Marker(
                 markerId: MarkerId(name),
                 position: LatLng(lat, lng),
-                infoWindow: InfoWindow(title: name, snippet: vicinity),
+                infoWindow: InfoWindow(title: name),
                 icon: BitmapDescriptor.defaultMarkerWithHue(
                   BitmapDescriptor.hueGreen, // Use JomJalan's green
                 ),
@@ -144,10 +141,13 @@ class _MapPageState extends State<MapPage> {
           _markers = newMarkers;
         });
       } else {
-        print('Places API error: ${response.body}');
+        print('Places API returned no results.');
       }
     } catch (e) {
       print('Error fetching nearby places: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
     }
   }
 
@@ -170,8 +170,7 @@ class _MapPageState extends State<MapPage> {
               myLocationButtonEnabled: true,
             ),
 
-            // --- MODIFIED SEARCH BAR ---
-            // Changed from Material to Container for better dark theme control
+            // Search Bar
             Positioned(
               top: 16,
               left: 16,
@@ -189,6 +188,19 @@ class _MapPageState extends State<MapPage> {
                 ),
                 child: Row(
                   children: [
+                    IconButton(
+                      icon: const Icon(
+                        Ionicons.arrow_back_outline,
+                        color: primaryGreen,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => const HomePage(),
+                          ),
+                        );
+                      },
+                    ),
                     Expanded(
                       child: TextField(
                         controller: _searchController,
@@ -217,7 +229,7 @@ class _MapPageState extends State<MapPage> {
               ),
             ),
 
-            // --- MOVED & STYLED CATEGORY CHIPS ---
+            // Category Chips
             Positioned(
               top: 80, // Positioned below the search bar
               left: 0,
@@ -259,7 +271,7 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  // --- NEW STYLED CATEGORY CHIP ---
+  // Category Chip Widget
   Widget _buildCategoryChip(String label, IconData icon, String category) {
     final bool selected = _selectedCategory == category;
     return GestureDetector(

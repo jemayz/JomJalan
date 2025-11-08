@@ -1,0 +1,6 @@
+Flask
+flask_cors
+requests
+beautifulsoup4
+google-generativeai
+python-dotenv

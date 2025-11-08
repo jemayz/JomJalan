@@ -18,19 +18,19 @@ class WelcomePage extends StatelessWidget {
               children: [
                 const Spacer(flex: 2),
                 // Placeholder for an illustration
-                Image.asset('assets/JomJalanLogo.png', height: 500),
-                const SizedBox(height: 10),
+                Image.asset('assets/JomJalanLogo.png', height: 400),
+                const SizedBox(height: 5),
                 const Text(
                   "Find What's Trending",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Color.fromARGB(255, 255, 255, 255),
                     height: 1.3,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 const Text(
                   "JomJalan scrapes TikTok, Google and all social medias. Discover the hottest spots & let our AI plan your perfect trip.",
                   textAlign: TextAlign.center,
@@ -68,7 +68,7 @@ class WelcomePage extends StatelessWidget {
                       child: const Text(
                         "Get Started",
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

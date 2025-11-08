@@ -44,7 +44,7 @@ android {
         versionName = flutter.versionName
         
         // This line reads the key from the 'envProperties' val
-        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = envProperties.getProperty("GOOGLE_MAPS_API_KEY", "")
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = envProperties.getProperty("ANDROID_MAPS_KEY", "")
     }
 
     buildTypes {

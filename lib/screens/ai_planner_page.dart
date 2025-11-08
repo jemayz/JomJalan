@@ -1,9 +1,8 @@
-// ignore_for_file: unused_import
-
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:jomjalan/main.dart'; // For colors
-import 'package:jomjalan/services/api_service.dart';
+import 'package:jomjalan/services/mock_api_service.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AiPlannerPage extends StatefulWidget {
   const AiPlannerPage({Key? key}) : super(key: key);
@@ -28,6 +27,9 @@ class _AiPlannerPageState extends State<AiPlannerPage> {
     });
     _promptController.clear();
 
+    // Scroll to the bottom
+    // We can add a ScrollController for this later
+
     final response = await _apiService.getAiPlan(userPrompt);
 
     setState(() {
@@ -39,7 +41,17 @@ class _AiPlannerPageState extends State<AiPlannerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AI Travel Planner'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(
+          'AI Travel Planner',
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: Column(
         children: [
           // Chat History
@@ -68,8 +80,18 @@ class _AiPlannerPageState extends State<AiPlannerPage> {
                 Expanded(
                   child: TextField(
                     controller: _promptController,
+                    // --- FIX #1: Make typing text white ---
+                    style: const TextStyle(color: textColor),
                     decoration: InputDecoration(
-                      hintText: 'e.g., "3 days in Penang, budget-friendly"',
+                      hintText: 'Destination, duration, budget...',
+                      // --- FIX #2: Make hint text grey ---
+                      hintStyle: const TextStyle(color: subTextColor),
+
+                      // --- FIX #3: Make text field visible ---
+                      filled: true,
+                      fillColor: secondaryBackgroundColor,
+
+                      // ------------------------------------
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: subTextColor),
@@ -87,7 +109,8 @@ class _AiPlannerPageState extends State<AiPlannerPage> {
                   icon: const Icon(Icons.send, color: Colors.white),
                   onPressed: _generatePlan,
                   style: IconButton.styleFrom(
-                    backgroundColor: accentColor,
+                    // --- FIX #4: Use primary green for button ---
+                    backgroundColor: primaryGreen,
                     padding: const EdgeInsets.all(16),
                   ),
                 ),
@@ -108,6 +131,37 @@ class ChatBubble extends StatelessWidget {
   const ChatBubble({Key? key, required this.text, required this.isUser})
     : super(key: key);
 
+  // --- NEW FUNCTION TO RENDER BOLD TEXT ---
+  Widget _buildFormattedText(String text) {
+    // This is the default style for all text
+    final baseStyle = const TextStyle(
+      color: textColor,
+      fontSize: 16,
+      height: 1.4,
+    );
+
+    // This is the style for the bolded parts
+    final boldStyle = baseStyle.copyWith(fontWeight: FontWeight.bold);
+
+    List<TextSpan> spans = [];
+    // Split the text by the bold delimiter
+    final parts = text.split('**');
+
+    for (int i = 0; i < parts.length; i++) {
+      // Even-numbered parts (0, 2, 4...) are normal text
+      // Odd-numbered parts (1, 3, 5...) are the bolded text
+      spans.add(
+        TextSpan(
+          text: parts[i],
+          style:
+              i % 2 == 1 ? boldStyle : baseStyle, // Apply style based on index
+        ),
+      );
+    }
+
+    return RichText(text: TextSpan(children: spans));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -116,17 +170,11 @@ class ChatBubble extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isUser ? primaryGreen : accentColor,
+          // --- FIX #5: User bubble is green, AI bubble is dark grey ---
+          color: isUser ? accentColor : secondaryBackgroundColor,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: isUser ? Colors.white : textColor,
-            fontSize: 16,
-            height: 1.4,
-          ),
-        ),
+        child: _buildFormattedText(text),
       ),
     );
   }

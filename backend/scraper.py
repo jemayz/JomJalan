@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import time
-import re  # <-- Import Regular Expressions for finding the price
 
 # --- Cache to avoid scraping on every API call ---
 # This is a simple in-memory cache.
@@ -19,6 +18,7 @@ def scrape_trending_spots():
     """
     current_time = time.time()
     
+    # 1. Check if the cache is still valid
     if cache_data['spots'] and (current_time - cache_data['last_updated'] < CACHE_DURATION):
         print("Returning data from cache...")
         return cache_data['spots']
@@ -33,7 +33,7 @@ def scrape_trending_spots():
     
     try:
         response = requests.get(URL, headers=headers)
-        response.raise_for_status()
+        response.raise_for_status()  # Raise an error for bad responses (404, 500, etc.)
 
         soup = BeautifulSoup(response.text, 'html.parser')
         
@@ -44,6 +44,7 @@ def scrape_trending_spots():
             print("Could not find the main content block 'entry-content'. The website layout may have changed.")
             return []
 
+        # Find all <h2> tags (as you discovered)
         all_name_tags = content.find_all('h2')
         
         spots = []
@@ -51,51 +52,42 @@ def scrape_trending_spots():
         for i, name_tag in enumerate(all_name_tags):
             
             full_text = name_tag.text.strip()
-            parts = full_text.split('.', 1)
             
+            # Now we clean the name (e.g., "1.Perdana..." or "15. Zoo...")
+            parts = full_text.split('.', 1) # Split only on the *first* period
+            
+            # We filter by checking if the first part is a digit
             if len(parts) > 1 and parts[0].isdigit():
-                
-                # --- NEW: Extract Price ---
-                price_match = re.search(r'\((.*?)\)', full_text)
-                price = price_match.group(1) if price_match else "Free Entry" # Get text in ( )
-                
-                # --- NEW: Clean the name (remove price) ---
-                name_no_price = re.sub(r'\((.*?)\)', '', parts[1]) # Remove ( )
-                name = name_no_price.strip()
-
+                # --- If we are here, it's a REAL spot ---
+                name = parts[1].strip() # "Perdana Botanical Garden"
+            
+                # --- The rest of the logic can now work ---
                 description_tag = name_tag.find_next_sibling('p')
                 description = description_tag.text.strip() if description_tag else "No description available."
 
+                # Find the image (it's inside a <figure> tag)
                 img_tag = None
                 figure_tag = name_tag.find_next_sibling('figure')
                 if figure_tag:
                     img_tag = figure_tag.find('img')
+                    
                 image_url = img_tag['src'] if img_tag else f"https://placehold.co/600x400/21a18e/white?text={name.replace(' ', '+')}"
                 
-                # --- NEW: Find Address and Hours ---
-                address = "No address available."
-                operating_hours = "No hours available."
-                
-                # We will look through the next few <p> tags
-                next_element = description_tag.find_next_sibling()
-                while next_element and next_element.name == 'p':
-                    p_text = next_element.text.strip()
-                    if p_text.startswith("Address:"):
-                        address = p_text.replace("Address:", "").strip()
-                    elif p_text.startswith("Operating Hours:"):
-                        operating_hours = p_text.replace("Operating Hours:", "").strip()
-                    next_element = next_element.find_next_sibling()
+                # Find location (usually in <strong>)
+                location = "Kuala Lumpur" # Default location
+                if description_tag:
+                    # Look for the <p> tag *after* the description
+                    location_tag = description_tag.find_next_sibling('p')
+                    if location_tag and 'Address:' in location_tag.text:
+                        location = location_tag.text.replace("Address:", "").strip()
 
                 # Match the JSON structure of your Flutter app
                 spot = {
                     'id': f'klfoodie_date_{i+1}',
                     'name': name,
-                    'location': "Kuala Lumpur", # General location
+                    'location': location,
                     'description': description,
-                    'imageUrl': image_url,
-                    'address': address,          # <-- NEW
-                    'operatingHours': operating_hours, # <-- NEW
-                    'price': price               # <-- NEW
+                    'imageUrl': image_url
                 }
                 spots.append(spot)
             
@@ -125,7 +117,6 @@ if __name__ == "__main__":
     if spots:
         print("\n--- SCRAPED SPOTS ---")
         for s in spots:
-            # Test our new fields
-            print(f"Name: {s['name']}, Price: {s['price']}, Address: {s['address'][:30]}...")
+            print(f"Name: {s['name']}, Location: {s['location']}")
     else:
         print("No spots were found.")

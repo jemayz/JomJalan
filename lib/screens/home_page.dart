@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:google_fonts/google_fonts.dart';
 // ignore: unused_import
 import 'package:jomjalan/main.dart';
 import 'package:jomjalan/models/spot_model.dart';
-import 'package:jomjalan/screens/ai_planner_page.dart';
+import 'package:jomjalan/screens/map_page.dart';
 import 'package:jomjalan/screens/spot_details_page.dart';
 import 'package:jomjalan/services/api_service.dart';
 import 'package:jomjalan/widgets/location_card.dart';
@@ -39,13 +40,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Function to navigate to the AI Planner tab
-  void _goToAiPlanner() {
-    // This is tricky navigation. We need to tell the MainNavScreen
-    // to change tabs. This requires a more complex state setup.
-    // For a prototype, a simpler way is to just navigate to the page directly.
+  void _goToMapPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AiPlannerPage()),
+      MaterialPageRoute(builder: (context) => const MapPage()),
     );
   }
 
@@ -56,13 +54,35 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: backgroundColor,
         elevation: 1.0,
         automaticallyImplyLeading: false,
-        title: Text(
-          "JomJalan",
-          style: TextStyle(
-            color: Colors.white, // Use your main green color
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
+        title: Row(
+          // This tells the Row to only be as wide as its children
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "Jom",
+              style: GoogleFonts.pacifico(
+                color: textColor, // Your accent color
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+            Text(
+              "J",
+              style: GoogleFonts.pacifico(
+                color: accentColor, // Your main text color
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+            Text(
+              "alan",
+              style: GoogleFonts.pacifico(
+                color: textColor, // Your main text color
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
         actions: [
@@ -82,8 +102,7 @@ class _HomePageState extends State<HomePage> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
-          // AI Planner Card
-          GestureDetector(onTap: _goToAiPlanner, child: const LocationCard()),
+          GestureDetector(onTap: _goToMapPage, child: const LocationCard()),
           const SizedBox(height: 24),
 
           // Trending Spots Section

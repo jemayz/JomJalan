@@ -13,7 +13,17 @@ class ItineraryPage extends StatelessWidget {
     final itinerary = context.watch<ItineraryProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Itinerary')),
+      appBar: AppBar(
+        title: const Text(
+          'My Itinerary',
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body:
           itinerary.spots.isEmpty
               ? Center(
@@ -40,6 +50,7 @@ class ItineraryPage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final spot = itinerary.spots[index];
                   return Card(
+                    color: secondaryBackgroundColor,
                     elevation: 2,
                     margin: const EdgeInsets.only(bottom: 12),
                     shape: RoundedRectangleBorder(
@@ -57,9 +68,15 @@ class ItineraryPage extends StatelessWidget {
                       ),
                       title: Text(
                         spot.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      subtitle: Text(spot.location),
+                      subtitle: Text(
+                        spot.location,
+                        style: TextStyle(color: subTextColor),
+                      ),
                       trailing: IconButton(
                         icon: const Icon(
                           Icons.remove_circle,
