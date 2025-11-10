@@ -15,7 +15,7 @@ app = Flask(__name__)
 CORS(app) # Allow requests from our Flutter app
 
 # --- FIX: Get the new SERVER_MAPS_KEY --- (Tukau nama key)
-GOOGLE_MAPS_API_KEY = os.getenv('SERVERH_MAPS_KEY')
+GOOGLE_MAPS_API_KEY = os.getenv('SERVER_MAPS_KEY')
 if not GOOGLE_MAPS_API_KEY:
     print("Warning: SERVER_MAPS_KEY not found in .env file. /api/nearby_places will not work.")
 
@@ -83,21 +83,37 @@ def nearby_places():
 
     try:
         response = requests.get(PLACES_API_URL, params=params)
-        response.raise_for_status() 
         data = response.json()
         
-        # --- THIS IS THE NEW DEBUG LINE ---
-        print(f"[Google Places Response]: {data}")
-        # ----------------------------------
+        print(f"[Google Nearby Response]: {data}")
         
         places = []
-        for result in data.get('results', []):
-            places.append({
-                "name": result.get('name'),
-                "lat": result.get('geometry', {}).get('location', {}).get('lat'),
-                "lng": result.get('geometry', {}).get('location', {}).get('lng'),
-            })
-            
+        if data.get('status') == 'OK':
+            for result in data.get('results', []):
+                
+                # --- THIS IS THE FIX ---
+                # 1. Get the photo reference, if it exists
+                photo_ref = None
+                if result.get('photos'):
+                    photo_ref = result.get('photos')[0].get('photo_reference')
+                
+                # 2. Build the full photo URL
+                image_url = "https://placehold.co/400x400/0f2027/b2dfdb?text=No+Image" # Placeholder
+                if photo_ref:
+                    image_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_ref}&key={GOOGLE_MAPS_API_KEY}"
+                
+                # 3. Add the new data to our response
+                places.append({
+                    "name": result.get('name'),
+                    "lat": result.get('geometry', {}).get('location', {}).get('lat'),
+                    "lng": result.get('geometry', {}).get('location', {}).get('lng'),
+                    "vicinity": result.get('vicinity'), # The address
+                    "rating": result.get('rating', 0),  # The star rating
+                    "user_ratings_total": result.get('user_ratings_total', 0), # Total reviews
+                    "imageUrl": image_url # The new, full image URL
+                })
+                # -----------------------------------------------------
+        
         return jsonify(places)
 
     except requests.exceptions.RequestException as e:
