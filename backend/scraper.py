@@ -1,122 +1,243 @@
 import requests
 from bs4 import BeautifulSoup
 import time
+from urllib.parse import urlparse # Used to check the domain
+
+# --- NEW: URL mapping for different states ---
+STATE_URLS = {
+    'Kuala Lumpur': "https://klfoodie.com/date-spots-kl-wallet-friendly-free/",
+    'Selangor': "https://www.visitselangor.com/topic/cultural-heritage/",
+    'Perak': "https://ecentral.my/tempat-menarik-di-ipoh/",
+    'Penang': "https://ecentral.my/tempat-menarik-di-penang/",
+    'Johor': "https://ecentral.my/tempat-menarik-di-johor-bahru/",
+    'Sabah': "https://www.klook.com/ms-MY/blog/tempat-semulajadi-sabah-cantik/",
+    'Sarawak': "",
+    'Melaka': "",
+    'Negeri Sembilan': "",
+    'Kedah': "",
+    'Pahang': "",
+    'Terengganu': "",
+    'Kelantan': "",
+    'Perlis': "",
+}
+# ---------------------------------------------
+
 
 # --- Cache to avoid scraping on every API call ---
-# This is a simple in-memory cache.
-cache_data = {
-    'spots': None,
-    'last_updated': 0
-}
+cache_data = {}
 CACHE_DURATION = 3600  # 1 hour (in seconds)
 # -------------------------------------------------
 
-def scrape_trending_spots():
-    """
-    Scrapes KL Foodie for trending spots.
-    Uses a simple cache to avoid rate-limiting.
-    """
+# --- NEW: Parser function for klfoodie.com ---
+def _parse_klfoodie(content, state):
+# ... (existing code) ...
+    print("Using klfoodie parser...")
+    spots = []
+    all_name_tags = content.find_all('h2') # klfoodie uses h2
+    
+    for i, name_tag in enumerate(all_name_tags):
+# ... (existing code) ...
+        full_text = name_tag.text.strip()
+        parts = full_text.split('.', 1)
+        
+        if len(parts) > 1 and parts[0].isdigit():
+# ... (existing code) ...
+            name = parts[1].strip()
+            
+            description_tag = name_tag.find_next_sibling('p')
+# ... (existing code) ...
+            description = description_tag.text.strip() if description_tag else "No description."
+
+            img_tag = None
+# ... (existing code) ...
+            figure_tag = name_tag.find_next_sibling('figure')
+            if figure_tag:
+                img_tag = figure_tag.find('img')
+                
+# ... (existing code) ...
+            image_url = img_tag['src'] if (img_tag and 'src' in img_tag.attrs) else f"https://placehold.co/600x400/21a18e/white?text={name.replace(' ', '+')}"
+            
+            location = state
+# ... (existing code) ...
+            if description_tag:
+                location_tag = description_tag.find_next_sibling('p')
+                if location_tag and 'Address:' in location_tag.text:
+# ... (existing code) ...
+                    location = location_tag.text.replace("Address:", "").strip()
+
+            spot = {
+# ... (existing code) ...
+                'id': f'klfoodie_{state}_{i+1}', 'name': name, 'location': location,
+                'description': description, 'imageUrl': image_url
+            }
+            spots.append(spot)
+        else:
+# ... (existing code) ...
+            print(f"Skipping junk/unformatted tag: {full_text}")
+    return spots
+# -----------------------------------------
+
+# --- NEW: Parser function for ecentral.my ---
+def _parse_ecentral(content, state):
+# ... (existing code) ...
+    print("Using ecentral.my parser...")
+    spots = []
+    # ecentral uses h3 tags for its spot names
+    all_name_tags = content.find_all('h3')
+    
+    for i, name_tag in enumerate(all_name_tags):
+# ... (existing code) ...
+        full_text = name_tag.text.strip()
+        parts = full_text.split('.', 1)
+        
+        if len(parts) > 1 and parts[0].isdigit():
+# ... (existing code) ...
+            name = parts[1].strip()
+            
+            description_tag = name_tag.find_next_sibling('p')
+# ... (existing code) ...
+            description = description_tag.text.strip() if description_tag else "No description."
+
+            img_tag = None
+# ... (existing code) ...
+            # ecentral puts the image *before* the h3 tag
+            figure_tag = name_tag.find_previous_sibling('figure')
+            if figure_tag:
+# ... (existing code) ...
+                img_tag = figure_tag.find('img')
+                
+            image_url = img_tag['src'] if (img_tag and 'src' in img_tag.attrs) else f"https://placehold.co/600x400/21a18e/white?text={name.replace(' ', '+')}"
+            
+# ... (existing code) ...
+            location = state
+            if description_tag:
+                location_tag = description_tag.find_next_sibling('p')
+# ... (existing code) ...
+                if location_tag and 'Lokasi:' in location_tag.text:
+                    location = location_tag.text.replace("Lokasi:", "").strip()
+
+            spot = {
+# ... (existing code) ...
+                'id': f'ecentral_{state}_{i+1}', 'name': name, 'location': location,
+                'description': description, 'imageUrl': image_url
+            }
+            spots.append(spot)
+        else:
+# ... (existing code) ...
+            print(f"Skipping junk/unformatted tag: {full_text}")
+    return spots
+# -----------------------------------------
+
+# --- MASTER SCRAPER FUNCTION (Updated) ---
+def scrape_trending_spots(state="Kuala Lumpur"):
+# ... (existing code) ...
     current_time = time.time()
     
-    # 1. Check if the cache is still valid
-    if cache_data['spots'] and (current_time - cache_data['last_updated'] < CACHE_DURATION):
-        print("Returning data from cache...")
-        return cache_data['spots']
+    URL = STATE_URLS.get(state, STATE_URLS['Kuala Lumpur'])
+# ... (existing code) ...
+    if not URL:
+        print(f"No URL defined for {state}. Skipping.")
+        return []
+        
+# ... (existing code) ...
+    print(f"Scraper: Fetching URL: {URL}")
 
-    print("Cache expired or empty. Scraping new data...")
+    # Check cache
+    if state in cache_data and (current_time - cache_data[state]['last_updated'] < CACHE_DURATION):
+# ... (existing code) ...
+        print(f"Returning data from cache for {state}...")
+        return cache_data[state]['spots']
+
+    print(f"Cache expired or empty for {state}. Scraping new data...")
+# ... (existing code) ...
     
-    # We must send a User-Agent header to pretend we are a real browser
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    URL = "https://klfoodie.com/date-spots-kl-wallet-friendly-free/"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
     
     try:
-        response = requests.get(URL, headers=headers)
-        response.raise_for_status()  # Raise an error for bad responses (404, 500, etc.)
-
+# ... (existing code) ...
+        response = requests.get(URL, headers=headers, timeout=10)
+        response.raise_for_status() 
         soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # This is the main content area of the article
-        content = soup.find('div', class_='entry-content')
-        
-        if not content:
-            print("Could not find the main content block 'entry-content'. The website layout may have changed.")
-            return []
-
-        # Find all <h2> tags (as you discovered)
-        all_name_tags = content.find_all('h2')
+# ... (existing code) ...
         
         spots = []
+        domain = urlparse(URL).netloc # Get domain (e.g., 'klfoodie.com')
         
-        for i, name_tag in enumerate(all_name_tags):
-            
-            full_text = name_tag.text.strip()
-            
-            # Now we clean the name (e.g., "1.Perdana..." or "15. Zoo...")
-            parts = full_text.split('.', 1) # Split only on the *first* period
-            
-            # We filter by checking if the first part is a digit
-            if len(parts) > 1 and parts[0].isdigit():
-                # --- If we are here, it's a REAL spot ---
-                name = parts[1].strip() # "Perdana Botanical Garden"
-            
-                # --- The rest of the logic can now work ---
-                description_tag = name_tag.find_next_sibling('p')
-                description = description_tag.text.strip() if description_tag else "No description available."
-
-                # Find the image (it's inside a <figure> tag)
-                img_tag = None
-                figure_tag = name_tag.find_next_sibling('figure')
-                if figure_tag:
-                    img_tag = figure_tag.find('img')
-                    
-                image_url = img_tag['src'] if img_tag else f"https://placehold.co/600x400/21a18e/white?text={name.replace(' ', '+')}"
-                
-                # Find location (usually in <strong>)
-                location = "Kuala Lumpur" # Default location
-                if description_tag:
-                    # Look for the <p> tag *after* the description
-                    location_tag = description_tag.find_next_sibling('p')
-                    if location_tag and 'Address:' in location_tag.text:
-                        location = location_tag.text.replace("Address:", "").strip()
-
-                # Match the JSON structure of your Flutter app
-                spot = {
-                    'id': f'klfoodie_date_{i+1}',
-                    'name': name,
-                    'location': location,
-                    'description': description,
-                    'imageUrl': image_url
-                }
-                spots.append(spot)
-            
+# ... (existing code) ...
+        # --- NEW: Select the correct blueprint ---
+        if 'klfoodie.com' in domain:
+            content = soup.find('div', class_='entry-content')
+            if content:
+# ... (existing code) ...
+                spots = _parse_klfoodie(content, state)
             else:
-                # This is a junk tag (like "Which Spot Are You...")
-                print(f"Skipping junk/unformatted tag: {full_text}")
-                continue
-
+                print("Could not find 'entry-content' on klfoodie.")
         
+        elif 'ecentral.my' in domain:
+            # --- THIS IS THE FIX ---
+            # The correct class for ecentral.my is 'td-post-content'
+            content = soup.find('div', class_='td-post-content')
+            # -----------------------
+            if content:
+                spots = _parse_ecentral(content, state)
+            else:
+                print("Could not find 'td-post-content' on ecentral.")
+        
+        elif 'visitselangor.com' in domain:
+# ... (existing code) ...
+            # TODO: You would need to write a new parser for this site.
+            print("visitselangor.com parser is not built yet.")
+            pass # Returns empty list
+            
+# ... (existing code) ...
+        elif 'klook.com' in domain:
+            # TODO: Klook is very hard to scrape and would fail.
+            print("Klook.com is protected and cannot be scraped easily.")
+# ... (existing code) ...
+            pass # Returns empty list
+        # -----------------------------------------
+            
         # Update cache
-        cache_data['spots'] = spots
-        cache_data['last_updated'] = current_time
-        
-        print(f"Successfully scraped {len(spots)} spots.")
+# ... (existing code) ...
+        cache_data[state] = {'spots': spots, 'last_updated': current_time}
+        print(f"Successfully scraped {len(spots)} spots for {state}.")
         return spots
 
+# ... (existing code) ...
     except requests.exceptions.RequestException as e:
         print(f"Error scraping website: {e}")
-        return [] # Return an empty list on failure
+        return []
     except Exception as e:
+# ... (existing code) ...
         print(f"An error occurred during parsing: {e}")
         return []
+# ------------------------------------
 
 # Test the function
 if __name__ == "__main__":
-    spots = scrape_trending_spots()
-    if spots:
-        print("\n--- SCRAPED SPOTS ---")
-        for s in spots:
-            print(f"Name: {s['name']}, Location: {s['location']}")
+# ... (existing code) ...
+    print("--- Testing KL ---")
+    spots_kl = scrape_trending_spots("Kuala Lumpur")
+    if spots_kl:
+# ... (existing code) ...
+        print(f"\n--- Found {len(spots_kl)} KL Spots ---")
     else:
-        print("No spots were found.")
+        print("No KL spots were found.")
+    
+# ... (existing code) ...
+    print("\n--- Testing Penang (ecentral) ---")
+    spots_penang = scrape_trending_spots("Penang")
+    if spots_penang:
+# ... (existing code) ...
+        print(f"\n--- Found {len(spots_penang)} Penang Spots ---")
+    else:
+        print("No Penang spots were found.")
+        
+# ... (existing code) ...
+    print("\n--- Testing Selangor (visitselangor) ---")
+    spots_selangor = scrape_trending_spots("Selangor")
+    if spots_selangor:
+# ... (existing code) ...
+        print(f"\n--- Found {len(spots_selangor)} Selangor Spots ---")
+    else:
+        print("No Selangor spots were found (parser not built).")

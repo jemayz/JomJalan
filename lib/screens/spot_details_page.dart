@@ -52,25 +52,28 @@ class SpotDetailsPage extends StatelessWidget {
                 ),
                 // Title
                 Positioned(
-                  bottom: 20,
+                  bottom: 5,
                   left: 20,
+                  right: 20,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
+                        maxLines: 2,
                         spot.name,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 28,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
+                        maxLines: 2,
                         spot.location,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -97,7 +100,7 @@ class SpotDetailsPage extends StatelessWidget {
                   Text(
                     spot.description,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       color: subTextColor,
                       height: 1.5,
                     ),
@@ -112,7 +115,10 @@ class SpotDetailsPage extends StatelessWidget {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(20.0),
         child: ElevatedButton.icon(
-          icon: Icon(isInItinerary ? Ionicons.checkmark_circle : Ionicons.add),
+          icon: Icon(
+            color: textColor,
+            isInItinerary ? Ionicons.checkmark_circle : Ionicons.add,
+          ),
           label: Text(
             isInItinerary ? 'Added to Itinerary' : 'Add to Itinerary',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

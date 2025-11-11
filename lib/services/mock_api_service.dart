@@ -11,25 +11,28 @@ import 'package:http/http.dart' as http;
 const String API_BASE_URL = "http://10.0.2.2:5000";
 
 class MockApiService {
-  // Simulates fetching trending spots
-  Future<List<Spot>> getTrendingSpots() async {
-    final uri = Uri.parse('$API_BASE_URL/api/trending_spots');
+  Future<List<Spot>> getTrendingSpots(String state) async {
+    print("API Service: Fetching trending spots for $state...");
+
+    // --- THIS IS THE FIX ---
+    // We must add the 'state' as a query parameter to the URL
+    final uri = Uri.parse(
+      '$API_BASE_URL/api/trending_spots?state=${Uri.encodeComponent(state)}',
+    );
+    // -----------------------
 
     try {
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
-        // Decode the JSON list
         List<dynamic> data = json.decode(response.body);
-
-        // Convert the JSON list into a List<Spot>
         return data.map((json) => Spot.fromJson(json)).toList();
       } else {
         throw Exception("Failed to load spots from backend.");
       }
     } catch (e) {
       print("Error in getTrendingSpots: $e");
-      return []; // Return empty list on error
+      throw Exception("Connection Error: Is the backend server running?");
     }
   }
 

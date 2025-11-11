@@ -4,7 +4,7 @@ import 'package:ionicons/ionicons.dart';
 import 'package:jomjalan/main.dart'; // For colors
 import 'package:jomjalan/models/spot_model.dart'; // For Challenge
 import 'package:jomjalan/providers/gamification_provider.dart';
-import 'package:jomjalan/services/api_service.dart';
+import 'package:jomjalan/services/mock_api_service.dart';
 import 'package:jomjalan/widgets/section_header.dart';
 import 'package:provider/provider.dart';
 
