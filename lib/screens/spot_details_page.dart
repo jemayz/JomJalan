@@ -52,7 +52,7 @@ class SpotDetailsPage extends StatelessWidget {
                 ),
                 // Title
                 Positioned(
-                  bottom: 5,
+                  bottom: 20,
                   left: 20,
                   right: 20,
                   child: Column(
@@ -73,7 +73,7 @@ class SpotDetailsPage extends StatelessWidget {
                         spot.location,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 15,
                         ),
                       ),
                     ],
@@ -92,7 +92,7 @@ class SpotDetailsPage extends StatelessWidget {
                     "About this place",
                     style: TextStyle(
                       color: textColor,
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

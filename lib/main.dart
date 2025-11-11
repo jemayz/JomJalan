@@ -61,6 +61,9 @@ class JomJalanApp extends StatelessWidget {
         primaryColor: primaryGreen,
         scaffoldBackgroundColor: backgroundColor,
         fontFamily: 'Inter', // You can add this font to pubspec.yaml
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: primaryGreen,
+        ),
         appBarTheme: const AppBarTheme(
           elevation: 1,
           backgroundColor: backgroundColor,
