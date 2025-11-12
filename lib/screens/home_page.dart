@@ -10,6 +10,7 @@ import 'package:jomjalan/main.dart'; // Import theme
 import 'package:jomjalan/widgets/location_card.dart';
 import 'package:jomjalan/widgets/section_header.dart';
 import 'package:jomjalan/widgets/spot_card.dart';
+import 'package:jomjalan/screens/itinerary_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -74,14 +75,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Function to navigate to the AI Planner tab
-  void _goToMapPage() {
-    // This is not the AI planner, it's the Map Page.
-    // The best way to navigate is to tell the MainNavScreen to change tabs.
-    // We'll use your existing (simpler) navigation for now.
+  // Function to navigate to the My Itinerary
+  void _goToItineraryPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const MapPage()),
+      MaterialPageRoute(builder: (context) => const ItineraryPage()),
     );
   }
 
@@ -123,14 +121,15 @@ class _HomePageState extends State<HomePage> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(
-              Ionicons.notifications_outline,
-              color: textColor, // Use a neutral text color
+          Padding(
+            padding: const EdgeInsets.only(right: 5.0, top: 5.0),
+            child: IconButton(
+              icon: Icon(
+                Ionicons.map_outline,
+                color: textColor, // Use a neutral text color
+              ),
+              onPressed: _goToItineraryPage,
             ),
-            onPressed: () {
-              /* TODO: Implement notifications */
-            },
           ),
           const SizedBox(width: 8), // Add some padding to the edge
         ],
@@ -139,11 +138,6 @@ class _HomePageState extends State<HomePage> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
-          // --- REMOVED Search Bar ---
-          // GestureDetector(onTap: _goToMapPage, child: const LocationCard()),
-          // const SizedBox(height: 24),
-
-          // --- NEW: State Selection Dropdown ---
           Padding(
             padding: const EdgeInsets.only(bottom: 16.0),
             child: DropdownButtonFormField<String>(

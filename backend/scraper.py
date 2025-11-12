@@ -73,7 +73,7 @@ def _parse_ecentral(content, state):
     
     # --- THIS IS YOUR FIX ---
     # Find all <h3> tags that have the class 'wp-block-heading'
-    all_name_tags = content.find_all('h3', class_='wp-block-heading')
+    all_name_tags = content.find_all(['h3', 'h4'], class_='wp-block-heading')
     # ------------------------
     
     for i, name_tag in enumerate(all_name_tags):

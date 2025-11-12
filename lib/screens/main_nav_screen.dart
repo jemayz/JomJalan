@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:jomjalan/screens/ai_planner_page.dart';
 import 'package:jomjalan/screens/home_page.dart';
-import 'package:jomjalan/screens/itinerary_page.dart';
+import 'package:jomjalan/screens/jomclone_page.dart';
 import 'package:jomjalan/screens/map_page.dart';
 import 'package:jomjalan/screens/profile_page.dart';
 import 'package:jomjalan/main.dart';
@@ -21,7 +21,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
     HomePage(),
     MapPage(),
     AiPlannerPage(),
-    const ItineraryPage(),
+    JomClonePage(),
     const ProfilePage(),
   ];
   // ---------------------
@@ -68,9 +68,9 @@ class _MainNavScreenState extends State<MainNavScreen> {
             label: "AI Planner",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Ionicons.map_outline),
-            activeIcon: Icon(Ionicons.map),
-            label: "Itinerary",
+            icon: Icon(Ionicons.copy_outline),
+            activeIcon: Icon(Ionicons.copy),
+            label: "JomClone",
           ),
           BottomNavigationBarItem(
             icon: Icon(Ionicons.person_outline),
