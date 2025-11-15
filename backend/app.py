@@ -3,6 +3,7 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 import requests # Make sure 'requests' is in your requirements.txt
+import json
 
 # Import our other files
 from scraper import scrape_trending_spots
@@ -116,10 +117,26 @@ def trending_spots():
 # --- Endpoint 2: AI Planner ---
 @app.route('/api/ai_planner', methods=['POST'])
 def ai_planner():
-# ... (rest of this function is unchanged) ...
     data = request.json
-    plan = get_ai_plan(data.get('prompt')) 
-    return jsonify({"plan": plan})
+    user_prompt = data.get('prompt')
+    if not user_prompt:
+        return jsonify({"error": "No prompt provided"}), 400
+
+    print(f"Flask: Received AI plan request: {user_prompt}")
+    
+    # 1. Get the JSON *string* from the AI planner
+    json_string_plan = get_ai_plan(user_prompt)
+    
+    try:
+        # 2. Convert the JSON string into a real Python dictionary
+        dict_plan = json.loads(json_string_plan)
+        
+        # 3. Return the dictionary, which Flask will correctly jsonify
+        return jsonify(dict_plan)
+    except Exception as e:
+        print(f"Error parsing AI JSON response: {e}")
+        # If parsing fails, send the raw text back as a fallback
+        return jsonify({"friendly_response": json_string_plan})
 
 # --- Endpoint 3: Find Place (For the search bar) ---
 @app.route('/api/find_place', methods=['GET'])
@@ -134,28 +151,41 @@ def find_place():
     params = {
         "input": query,
         "inputtype": "textquery",
-        "fields": "geometry", # We only need the lat/lng
+        "fields": "place_id,name,formatted_address,photos", # We only need the lat/lng
         "key": GOOGLE_MAPS_API_KEY
     }
     
     try:
         response = requests.get(FIND_PLACE_URL, params=params)
         data = response.json()
-        
         print("[Google Find Place Response]:", data)
         
         if data.get('status') == 'OK' and data.get('candidates'):
-            location = data['candidates'][0]['geometry']['location']
-            return jsonify({"status": "OK", "location": location})
+            candidate = data['candidates'][0]
+            
+            # --- THIS IS THE FIX ---
+            # Build the image URL and get the location
+            imageUrl = "https://placehold.co/400x400/0f2027/b2dfdb?text=No+Image"
+            if candidate.get('photos'):
+                photo_ref = candidate['photos'][0]['photo_reference']
+                imageUrl = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_ref}&key={GOOGLE_MAPS_API_KEY}"
+            
+            location = candidate.get('formatted_address', 'No address found')
+            
+            # Return all the data the app needs
+            return jsonify({
+                "status": "OK", 
+                "imageUrl": imageUrl, 
+                "location": location
+            })
+            # -----------------------
+            
         else:
-            # Send the error message back to the app
             return jsonify({"status": data.get('status'), "error_message": data.get('error_message')})
             
     except requests.exceptions.RequestException as e:
         print(f"Error calling Find Place API: {e}")
         return jsonify({"error": str(e)}), 500
-# ----------------------------------------------------
-
 # --- Endpoint 4: Nearby Places (For categories) ---
 @app.route('/api/nearby_places', methods=['GET'])
 def nearby_places():

@@ -114,15 +114,17 @@ class MockApiService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Check if the plan is in data['plan'] or data['text']
-        return data['plan'] ?? data.toString();
+        // --- THIS IS THE FIX ---
+        // Return the raw JSON string directly.
+        // The AI Planner page will decode it.
+        return response.body;
+        // -----------------------
       } else {
-        return "Sorry, the AI planner seems to be offline.";
+        return "{\"friendly_response\": \"Sorry, the AI planner seems to be offline.\" }";
       }
     } catch (e) {
       print("Error in getAiPlan: $e");
-      return "Error connecting to the AI planner. Is the server running?";
+      return "{\"friendly_response\": \"Error connecting to the AI planner. Is the server running?\" }";
     }
   }
 }

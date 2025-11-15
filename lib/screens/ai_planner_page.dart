@@ -1,8 +1,10 @@
+import 'dart:convert'; // <-- ADD THIS
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:jomjalan/main.dart'; // For colors
 import 'package:jomjalan/services/mock_api_service.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart'; // <-- ADD THIS
+import 'package:jomjalan/providers/itinerary_provider.dart'; // <-- ADD THIS
 
 class AiPlannerPage extends StatefulWidget {
   const AiPlannerPage({Key? key}) : super(key: key);
@@ -16,33 +18,81 @@ class _AiPlannerPageState extends State<AiPlannerPage> {
   final MockApiService _apiService = MockApiService();
   final List<Map<String, String>> _chatHistory = [];
   bool _isLoading = false;
+  final ScrollController _scrollController =
+      ScrollController(); // For auto-scroll
 
   void _generatePlan() async {
     if (_promptController.text.isEmpty) return;
     final userPrompt = _promptController.text;
+
+    // Get the ItineraryProvider *before* the async call
+    final itineraryProvider = context.read<ItineraryProvider>();
 
     setState(() {
       _chatHistory.add({"role": "user", "text": userPrompt});
       _isLoading = true;
     });
     _promptController.clear();
+    _scrollToBottom();
 
-    // Scroll to the bottom
-    // We can add a ScrollController for this later
+    // 1. Get the raw JSON string from the server
+    final String jsonResponse = await _apiService.getAiPlan(userPrompt);
 
-    final response = await _apiService.getAiPlan(userPrompt);
+    // 2. Decode the JSON string into a Map
+    Map<String, dynamic> aiData;
+    String friendlyText;
+    List<dynamic> itineraryDays = [];
 
+    try {
+      aiData = jsonDecode(jsonResponse);
+      friendlyText =
+          aiData['friendly_response'] ?? "Sorry, I had trouble planning.";
+      itineraryDays = aiData['itinerary_days'] ?? [];
+    } catch (e) {
+      print("Error decoding AI JSON: $e");
+      // This is a fallback if the AI sends plain text (or an error)
+      friendlyText = jsonResponse;
+    }
+
+    // 3. Add *only* the friendly response to the chat
     setState(() {
-      _chatHistory.add({"role": "ai", "text": response});
+      _chatHistory.add({"role": "ai", "text": friendlyText});
       _isLoading = false;
     });
+    _scrollToBottom();
+
+    // 4. Automatically add the new spots to your itinerary page
+    if (itineraryDays.isNotEmpty) {
+      await itineraryProvider.addSpotsFromAi(itineraryDays, _apiService);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Added to "My Itinerary"!'),
+          backgroundColor: primaryGreen,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
+
+  // --- NEW: Auto-scroll function ---
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+  // ---------------------------------
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'AI Travel Planner',
           style: TextStyle(
             color: textColor,
@@ -57,6 +107,7 @@ class _AiPlannerPageState extends State<AiPlannerPage> {
           // Chat History
           Expanded(
             child: ListView.builder(
+              controller: _scrollController, // <-- ADDED controller
               padding: const EdgeInsets.all(16),
               itemCount: _chatHistory.length,
               itemBuilder: (context, index) {
@@ -80,18 +131,12 @@ class _AiPlannerPageState extends State<AiPlannerPage> {
                 Expanded(
                   child: TextField(
                     controller: _promptController,
-                    // --- FIX #1: Make typing text white ---
                     style: const TextStyle(color: textColor),
                     decoration: InputDecoration(
                       hintText: 'Destination, duration, budget...',
-                      // --- FIX #2: Make hint text grey ---
                       hintStyle: const TextStyle(color: subTextColor),
-
-                      // --- FIX #3: Make text field visible ---
                       filled: true,
                       fillColor: secondaryBackgroundColor,
-
-                      // ------------------------------------
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: subTextColor),
@@ -109,7 +154,6 @@ class _AiPlannerPageState extends State<AiPlannerPage> {
                   icon: const Icon(Icons.send, color: Colors.white),
                   onPressed: _generatePlan,
                   style: IconButton.styleFrom(
-                    // --- FIX #4: Use primary green for button ---
                     backgroundColor: primaryGreen,
                     padding: const EdgeInsets.all(16),
                   ),
@@ -125,6 +169,7 @@ class _AiPlannerPageState extends State<AiPlannerPage> {
 
 // Simple Chat Bubble Widget
 class ChatBubble extends StatelessWidget {
+  // ... (this widget is unchanged) ...
   final String text;
   final bool isUser;
 
@@ -161,6 +206,7 @@ class ChatBubble extends StatelessWidget {
 
     return RichText(text: TextSpan(children: spans));
   }
+  // ----------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -170,11 +216,12 @@ class ChatBubble extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          // --- FIX #5: User bubble is green, AI bubble is dark grey ---
-          color: isUser ? accentColor : secondaryBackgroundColor,
+          color: isUser ? primaryGreen : secondaryBackgroundColor,
           borderRadius: BorderRadius.circular(16),
         ),
+        // --- UPDATED: Use the new RichText function ---
         child: _buildFormattedText(text),
+        // --------------------------------------------
       ),
     );
   }
