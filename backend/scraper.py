@@ -73,8 +73,7 @@ def _parse_ecentral(content, state):
     
     # --- THIS IS YOUR FIX ---
     # Find all <h3> tags that have the class 'wp-block-heading'
-    all_name_tags = content.find_all(['h3', 'h4'], class_='wp-block-heading')
-    # ------------------------
+    all_name_tags = content.find_all(['h3', 'h4'], class_='wp-block-heading')   
     
     for i, name_tag in enumerate(all_name_tags):
         full_text = name_tag.text.strip()
@@ -86,11 +85,8 @@ def _parse_ecentral(content, state):
             description_tag = name_tag.find_next_sibling('p')
             description = description_tag.text.strip() if description_tag else "No description."
 
-            img_tag = None
-            # ecentral puts the image *before* the h3 tag
-            # We use find_previous('img') to find the closest img tag before the h3
-            img_tag = name_tag.find_previous('img')
-                
+            img_tag = None      
+            img_tag = name_tag.find_previous('img')                
             image_url = img_tag['src'] if (img_tag and 'src' in img_tag.attrs) else f"https://placehold.co/600x400/21a18e/white?text={name.replace(' ', '+')}"
             
             location = state
