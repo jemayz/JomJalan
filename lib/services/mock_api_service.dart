@@ -54,6 +54,28 @@ class MockApiService {
     }
   }
 
+  // --- NEW FUNCTION: SEARCH PLACE (For Map Navigation) ---
+  // This calls the new /api/search_place endpoint which returns Geometry (Lat/Lng)
+  Future<Map<String, dynamic>> searchPlace(String query) async {
+    final uri = Uri.parse(
+      '$API_BASE_URL/api/search_place?query=${Uri.encodeComponent(query)}',
+    );
+    try {
+      final response = await http.get(uri);
+
+      print("API Service: Searching for '$query'...");
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception("Failed to search place: ${response.body}");
+      }
+    } catch (e) {
+      print("Error in searchPlace: $e");
+      rethrow;
+    }
+  }
+
   // --- NEW FUNCTION TO CALL YOUR BACKEND FOR PLACES ---
   Future<List<dynamic>> getNearbyPlaces(
     LatLng location,

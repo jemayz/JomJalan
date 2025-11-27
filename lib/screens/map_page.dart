@@ -106,7 +106,7 @@ class _MapPageState extends State<MapPage> {
 
     try {
       // 1. Call your API Service, which calls your Flask server
-      final result = await _apiService.findPlace(query);
+      final result = await _apiService.searchPlace(query);
 
       // 2. Check if the server found a place
       if (result['status'] == 'OK' && result['location'] != null) {
