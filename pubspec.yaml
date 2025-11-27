@@ -42,10 +42,17 @@ dependencies:
   map_themes: ^0.0.2+2
   google_maps_flutter: ^2.14.0
   flutter_dotenv: ^6.0.0
+  flutter_native_splash: 2.4.6
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: "^0.14.4"
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/Logo.png"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -66,9 +73,9 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/icons/
-    - assets/places/
     - assets/JomJalanLogo.png
+    - assets/JomJalanSplash.png
+    - assets/Logo.png
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -96,3 +103,28 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_native_splash:
+  # 1. Set Background to Black
+  color: "#000000"
+
+  # 2. Your Image
+  # TIP: To make this look bigger, open 'assets/JomJalanLogo.png' in an image editor
+  # and CROP it so there is no empty transparent space around the logo.
+  image: assets/JomJalanSplash.png
+
+  # Optional: Use the full screen (removes status bars)
+  fullscreen: true
+
+  # =========================================================
+  # ANDROID 12+ CONFIGURATION (Critical for newer phones)
+  # =========================================================
+  android_12:
+    # Background color for Android 12+
+    color: "#000000"
+
+    # The logo image
+    image: assets/JomJalanSplash.png
+
+    # This sets the circle background behind your logo.
+    # Setting it to black makes it blend in seamlessly.
+    icon_background_color: "#000000"

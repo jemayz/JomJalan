@@ -16,7 +16,7 @@ app = Flask(__name__)
 CORS(app) # Allow requests from our Flutter app
 
 # --- FIX: Get the new SERVER_MAPS_KEY (removed the typo 'SERVERH_') ---
-GOOGLE_MAPS_API_KEY = os.getenv('SERVER_MAPS_KEY')
+GOOGLE_MAPS_API_KEY = os.getenv('SERVERH_MAPS_KEY')
 if not GOOGLE_MAPS_API_KEY:
     print("Warning: SERVER_MAPS_KEY not found in .env file. API calls will fail.")
 # -----------------------------------------------------------------
