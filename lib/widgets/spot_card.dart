@@ -54,17 +54,45 @@ class SpotCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             child: Image.network(
               spot.imageUrl,
-              height: 200, // <-- Set a good height for a full-width image
-              width: double.infinity, // <-- SET to full width
+              height: 200,
+              width: double.infinity,
               fit: BoxFit.cover,
-              // Add a loading builder
+
+              // 1. Show a loading spinner while fetching
               loadingBuilder: (context, child, progress) {
                 if (progress == null) return child;
                 return Container(
-                  height: 200, // <-- Match height
-                  width: double.infinity, // <-- Match width
+                  height: 200,
+                  width: double.infinity,
                   color: secondaryBackgroundColor,
-                  child: Center(child: CircularProgressIndicator()),
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              },
+
+              // 2. CRITICAL: Handle errors and print them
+              errorBuilder: (context, error, stackTrace) {
+                print(
+                  "IMAGE ERROR for ${spot.name}: $error",
+                ); // Check your terminal for this!
+                return Container(
+                  height: 200,
+                  width: double.infinity,
+                  color: Colors.grey[300],
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Ionicons.image_outline,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Failed to load",
+                        style: TextStyle(color: Colors.grey[700]),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),

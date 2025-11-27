@@ -41,7 +41,7 @@ class Spot {
       // Use 'tryParse' to be safe
       rating: (json['rating'] as num?)?.toDouble(),
       userRatingsTotal: (json['user_ratings_total'] as num?)?.toInt(),
-      priceLevel: (json['price_level'] as num?)?.toInt(),
+      priceLevel: (json['priceLevel'] as num?)?.toInt(),
       // ------------------------
     );
   }

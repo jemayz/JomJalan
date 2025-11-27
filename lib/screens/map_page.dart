@@ -133,12 +133,16 @@ class _MapPageState extends State<MapPage> {
                 // Show a simple card for the searched place
                 setState(() {
                   _selectedPlace = {
-                    "name": query,
-                    "vicinity": "Searched Location",
+                    "name":
+                        result['name'] ??
+                        query, // Use name from result if available
+                    // Use the real address from the API
+                    "vicinity":
+                        result['formatted_address'] ?? "Searched Location",
                     "rating": 0.0,
                     "user_ratings_total": 0,
                     "imageUrl":
-                        "https://placehold.co/400x400/0f2027/b2dfdb?text=${query.replaceAll(' ', '+')}",
+                        result['imageUrl'] ?? "https://placehold.co/400",
                   };
                 });
               },

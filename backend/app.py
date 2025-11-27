@@ -103,8 +103,9 @@ def trending_spots():
                 if candidate.get('photos'):
 # ... (existing code) ...
                     photo_ref = candidate['photos'][0]['photo_reference']
-                    spot['imageUrl'] = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_ref}&key={GOOGLE_MAPS_API_KEY}"
-            
+                    spot['imageUrl'] = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference={photo_ref}&key={GOOGLE_MAPS_API_KEY}"
+                    # --- ADD THIS DEBUG PRINT ---
+                    print(f"DEBUG IMAGE URL: {spot['imageUrl']}")
             enriched_spots.append(spot)
             
 # ... (rest of file is unchanged) ...
@@ -168,17 +169,16 @@ def find_place():
             imageUrl = "https://placehold.co/400x400/0f2027/b2dfdb?text=No+Image"
             if candidate.get('photos'):
                 photo_ref = candidate['photos'][0]['photo_reference']
-                imageUrl = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_ref}&key={GOOGLE_MAPS_API_KEY}"
+                imageUrl = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference={photo_ref}&key={GOOGLE_MAPS_API_KEY}"
             
             location = candidate.get('formatted_address', 'No address found')
             
-            # Return all the data the app needs
             return jsonify({
                 "status": "OK", 
                 "imageUrl": imageUrl, 
-                "location": location
+                "location": location,  
+                
             })
-            # -----------------------
             
         else:
             return jsonify({"status": data.get('status'), "error_message": data.get('error_message')})
@@ -186,6 +186,7 @@ def find_place():
     except requests.exceptions.RequestException as e:
         print(f"Error calling Find Place API: {e}")
         return jsonify({"error": str(e)}), 500
+    
 # --- Endpoint 4: Nearby Places (For categories) ---
 @app.route('/api/nearby_places', methods=['GET'])
 def nearby_places():
@@ -226,7 +227,7 @@ def nearby_places():
                 # 2. Build the full photo URL
                 image_url = "https://placehold.co/400x400/0f2027/b2dfdb?text=No+Image" # Placeholder
                 if photo_ref:
-                    image_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_ref}&key={GOOGLE_MAPS_API_KEY}"
+                    image_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference={photo_ref}&key={GOOGLE_MAPS_API_KEY}"
                 
                 # 3. Add the new data to our response
                 places.append({
@@ -246,6 +247,59 @@ def nearby_places():
         print(f"Error calling Places API: {e}")
         return jsonify({"error": str(e)}), 500
 # ------------------------------------
+@app.route('/api/search_place', methods=['GET'])
+def search_place():
+    query = request.args.get('query')
+    if not query or not GOOGLE_MAPS_API_KEY:
+        return jsonify({"error": "Missing query or server API key"}), 400
+    
+    FIND_PLACE_URL = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
+    
+    params = {
+        "input": query,
+        "inputtype": "textquery",
+        # --- CRITICAL FIX: Added 'geometry' here ---
+        # We need 'geometry' to get lat/lng. We also get photos and address.
+        "fields": "place_id,name,formatted_address,photos,geometry", 
+        "key": GOOGLE_MAPS_API_KEY
+    }
+    
+    try:
+        response = requests.get(FIND_PLACE_URL, params=params)
+        data = response.json()
+        print(f"[Google Search Place Response]: {data}")
+        
+        if data.get('status') == 'OK' and data.get('candidates'):
+            candidate = data['candidates'][0]
+            
+            # 1. Extract Lat/Lng (Geometry)
+            # This allows the Flutter map to actually move to the location
+            geometry = candidate.get('geometry', {})
+            location_coords = geometry.get('location') # Returns {'lat': 123.45, 'lng': 67.89}
+
+            # 2. Build Image URL
+            imageUrl = "https://placehold.co/400x400/0f2027/b2dfdb?text=No+Image"
+            if candidate.get('photos'):
+                photo_ref = candidate['photos'][0]['photo_reference']
+                imageUrl = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference={photo_ref}&key={GOOGLE_MAPS_API_KEY}"
+            
+            # 3. Get formatted address
+            formatted_address = candidate.get('formatted_address', 'No address found')
+            
+            return jsonify({
+                "status": "OK", 
+                "name": candidate.get('name'),
+                "imageUrl": imageUrl, 
+                "location": location_coords, # This sends the {lat, lng} object
+                "formatted_address": formatted_address
+            })
+            
+        else:
+            return jsonify({"status": data.get('status'), "error_message": data.get('error_message')})
+            
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling Find Place API: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
